@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Feud Night</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a1440; --panel:#0d1c56; --panel2:#0f2166;
+    --gold:#f6b93b; --gold-dim:#c98f22; --gold-light:#ffe08a;
+    --ink:#f4f1e6; --muted:#aeb6df;
+    --red:#e0483f; --green:#3fa96a;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:inherit;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  html,body{height:100%;}
+  body{
+    margin:0; background:#000; color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100%;
+    display:flex; flex-direction:column; align-items:center;
+    padding:0;
+  }
+
+  /* ---- start screen ---- */
+  .start-screen{
+    width:100%; min-height:100vh; background:radial-gradient(ellipse at 50% 30%, #0c1a4a 0%, #04061a 65%, #000 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    position:relative; overflow:hidden; padding:20px;
+    transition:opacity .4s ease; gap:34px;
+  }
+  .start-screen.fade-out{opacity:0; pointer-events:none;}
+  .beam{position:absolute; top:-10%; width:340px; height:160%; opacity:.55; pointer-events:none;
+    background:repeating-linear-gradient(90deg, rgba(120,180,255,.35) 0 4px, transparent 4px 22px);
+    filter:blur(1px);}
+  .beam-left{left:-140px; transform:rotate(18deg);}
+  .beam-right{right:-140px; transform:rotate(-18deg);}
+  .beam-top{left:50%; top:-30%; width:260px; transform:translateX(-50%) rotate(0deg); opacity:.4;}
+  .ff-oval{
+    width:min(88vw,560px); aspect-ratio:16/9; border-radius:50%;
+    background:radial-gradient(ellipse at 50% 40%, #1c3d9e 0%, #0d2170 60%, #081656 100%);
+    border:6px solid var(--gold); box-shadow:0 0 0 3px #0a1440, 0 0 0 6px rgba(246,185,59,.5), 0 0 60px rgba(80,140,255,.35);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+    position:relative; z-index:2;
+  }
+  .ff-oval::before{content:"";position:absolute; inset:10px; border-radius:50%; border:2px solid rgba(255,255,255,.55);}
+  .ff-title{
+    font-family:'Poppins',system-ui,sans-serif; font-weight:800; letter-spacing:2px;
+    font-size:clamp(30px,9vw,64px); line-height:1;
+    background:linear-gradient(180deg, #fff2c4 0%, #f6b93b 45%, #d9770f 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 2px 0 rgba(0,0,0,.25);
+  }
+  .start-btn{
+    position:relative; z-index:2; padding:14px 46px; border-radius:40px; border:2px solid #cfe0ff;
+    background:linear-gradient(180deg,#3a63d8 0%, #1533a0 100%); color:#fff; font-weight:800;
+    font-family:'Poppins',system-ui,sans-serif; font-size:18px; letter-spacing:1px; cursor:pointer;
+    box-shadow:inset 0 2px 4px rgba(255,255,255,.4), 0 6px 18px rgba(0,0,0,.5);
+  }
+  .start-btn:hover{filter:brightness(1.1);}
+
+  .game-screen{
+    width:100%; min-height:100vh; display:flex; flex-direction:column; align-items:center;
+    background:radial-gradient(ellipse at 50% 0%, #10245e 0%, #050a24 70%);
+    padding:24px 14px 40px;
+  }
+  h1,h2,.num{font-family:'Poppins',system-ui,sans-serif;}
+  .title{font-size:clamp(28px,5vw,42px); font-weight:800; color:var(--gold); margin:4px 0 18px; text-align:center; letter-spacing:.5px;}
+  .teams{display:flex; gap:12px; width:100%; max-width:920px; flex-wrap:wrap; justify-content:center; margin-bottom:20px;}
+  .team{
+    background:var(--panel); border-radius:14px; padding:14px 18px; flex:1 1 200px;
+    border:2px solid transparent; text-align:center;
+  }
+  .team.active{border-color:var(--gold);}
+  .team-name{font-weight:600; font-size:15px; color:var(--muted); outline:none; border-bottom:1px dashed transparent;}
+  .team-name:focus{border-bottom:1px dashed var(--gold);}
+  .score{font-size:36px; font-weight:800; color:var(--gold); margin:4px 0;}
+  .team-btns{display:flex; gap:6px; justify-content:center; margin-top:6px;}
+  .mini{background:var(--panel2); border:none; color:var(--ink); border-radius:8px; padding:5px 10px; font-size:13px; cursor:pointer;}
+  .mini:hover{background:var(--gold-dim); color:var(--bg);}
+  .buzz{background:none; border:1px solid var(--gold-dim); color:var(--gold); border-radius:8px; padding:5px 10px; font-size:12px; cursor:pointer; margin-top:8px;}
+  .team.active .buzz{background:var(--gold); color:var(--bg); border-color:var(--gold);}
+
+  .board{
+    width:100%; max-width:760px; background:rgba(8,16,50,.55); border-radius:18px;
+    padding:22px clamp(14px,4vw,30px); position:relative;
+    backdrop-filter:blur(2px);
+  }
+  .round-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .round-nav .mini{padding:8px 14px;}
+  .round-count{color:var(--muted); font-size:14px;}
+  .question{
+    font-size:clamp(17px,3vw,21px); font-weight:700; text-align:center;
+    margin:0 0 18px; outline:none; padding:14px 18px; border-radius:12px;
+    background:linear-gradient(180deg,#12278c 0%,#0a1a63 100%);
+    border:3px solid var(--gold); box-shadow:inset 0 0 0 2px rgba(255,255,255,.12), 0 4px 10px rgba(0,0,0,.4);
+  }
+  .slots{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  @media (max-width:520px){ .slots{grid-template-columns:1fr;} }
+  .slot{
+    display:flex; align-items:center; background:linear-gradient(180deg,#12278c 0%,#0a1a63 100%);
+    border-radius:10px; border:2px solid var(--gold-dim);
+    height:52px; cursor:pointer; overflow:hidden; position:relative;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
+  }
+  .slot-inner{
+    display:flex; align-items:center; width:100%; height:100%; padding:0 14px;
+  }
+  .slot.revealed{border-color:var(--gold); background:linear-gradient(180deg,#1a8a58 0%,#0d5c39 100%);}
+  .slot-index{
+    width:26px; height:26px; border-radius:50%; background:var(--gold); color:#0a1440;
+    font-weight:800; font-size:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .slot.revealed .slot-index{background:#fff; color:#0d5c39;}
+  .slot-text{flex:1; margin-left:12px; font-weight:700; outline:none;}
+  .slot-pts{font-weight:800; color:var(--gold-light); min-width:34px; text-align:right; outline:none;}
+  .slot.revealed .slot-text, .slot.revealed .slot-pts{color:#fff;}
+  .slot-hint{font-size:11px; color:var(--muted); letter-spacing:1px;}
+  .slot.revealed .slot-hint{display:none;}
+  .slot:not(.revealed) .slot-text, .slot:not(.revealed) .slot-pts{display:none;}
+
+  .controls{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:20px;}
+  .btn{
+    background:var(--gold); color:var(--bg); border:none; border-radius:10px;
+    padding:11px 18px; font-weight:700; font-size:14px; cursor:pointer;
+  }
+  .btn.secondary{background:none; border:1px solid var(--muted); color:var(--muted);}
+  .btn:hover{filter:brightness(1.08);}
+
+  .strikes{display:flex; gap:10px; justify-content:center; margin:16px 0 4px;}
+  .x{
+    width:38px; height:38px; border-radius:8px; border:2px solid var(--muted);
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:20px;
+    color:var(--muted); cursor:pointer;
+  }
+  .x.on{border-color:var(--red); color:var(--red); background:rgba(224,72,63,.15);}
+
+  .hint-row{text-align:center; color:var(--muted); font-size:12px; margin-top:14px;}
+  @media (max-width:480px){ .teams{flex-direction:column;} }
+
+  .top-row{display:flex; align-items:center; justify-content:space-between; width:100%; max-width:920px; margin-bottom:6px;}
+  .top-row .spacer{width:70px;}
+
+  .timer-box{display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:20px;}
+  .timer-display{font-family:'Poppins',system-ui,sans-serif; font-weight:800; font-size:clamp(38px,9vw,56px); color:var(--gold); letter-spacing:2px;}
+  .timer-display.low{color:var(--red); animation:tpulse .5s infinite alternate;}
+  @keyframes tpulse{from{transform:scale(1);} to{transform:scale(1.08);}}
+  .timer-controls{display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center;}
+  .timer-input{width:66px; padding:7px 8px; border-radius:8px; border:1px solid var(--gold-dim); background:var(--panel2); color:var(--ink); font-size:14px; text-align:center;}
+</style>
+</head>
+<body>
+
+<div class="start-screen" id="startScreen">
+  <div class="beam beam-left"></div>
+  <div class="beam beam-right"></div>
+  <div class="beam beam-top"></div>
+  <div class="ff-oval">
+    <div class="ff-title">FAMILY</div>
+    <div class="ff-title">FEUD</div>
+  </div>
+  <button class="start-btn" onclick="startGame()">START</button>
+</div>
+
+<div class="game-screen" id="gameScreen" style="display:none;">
+
+<div class="top-row">
+  <button class="mini" onclick="goBack()">← Back</button>
+  <div class="title" style="margin:0;">🎮 Game Night</div>
+  <div class="spacer"></div>
+</div>
+
+<div class="teams" id="teams"></div>
+
+<div class="board">
+  <div class="timer-box">
+    <div class="timer-display" id="timerDisplay">01:00</div>
+    <div class="timer-controls">
+      <input type="number" id="timerSet" class="timer-input" min="5" step="5" value="60">
+      <button class="mini" onclick="setTimerDuration()">Set (sec)</button>
+      <button class="btn" id="timerStartBtn" onclick="toggleTimer()">Start</button>
+      <button class="mini" onclick="addTimer(30)">+30</button>
+      <button class="mini" onclick="resetTimer()">Reset</button>
+    </div>
+  </div>
+
+  <div class="round-nav">
+    <button class="mini" onclick="changeRound(-1)">← Prev</button>
+    <span class="round-count" id="roundCount"></span>
+    <button class="mini" onclick="changeRound(1)">Next →</button>
+  </div>
+
+  <h2 class="question" id="question" contenteditable="true" dir="auto"></h2>
+
+  <div class="slots" id="slots"></div>
+
+  <div class="strikes" id="strikes"></div>
+
+  <div class="controls">
+    <button class="btn" onclick="revealAll()">Reveal all</button>
+    <button class="btn secondary" onclick="resetRound()">Reset round</button>
+    <button class="btn secondary" id="soundBtn" onclick="toggleSound()">🔊 Sound on</button>
+  </div>
+  <div class="hint-row">Tap a team to mark them "buzzed in". Tap an answer slot to reveal it. Tap the X boxes for wrong guesses. Click any question or answer text to edit it.</div>
+</div>
+
+</div><!-- /game-screen -->
+
+<script>
+function startGame(){
+  sfxBuzz();
+  const s = document.getElementById('startScreen');
+  s.classList.add('fade-out');
+  setTimeout(()=>{
+    s.style.display='none';
+    document.getElementById('gameScreen').style.display='flex';
+  }, 380);
+}
+const rounds = [
+  { q:"اشهر ستة اكلات سودانية؟", a:[["كسرة",30],["قراصة",24],["سلطة اسود",18],["شية",13],["فتة / بوش",9],["اقاشي",6]] },
+  { q:"اذكروا ٦ مشروبات سودانية مشهورة", a:[["كركديه",30],["عرديب",24],["حلو مر",18],["تبلدي",13],["شربوت",9],["قونقليز",6]] },
+  { q:"حاجات الناس بتعملها في السودان لما الكهرباء تقطع", a:[["يشغلوا المولد",30],["يشوفوا كهربة الحي / الجيران",24],["يشغلوا الكشاف",18],["يطلعوا الحوش",13],["يشوفوا الموية لو قلعت",9],["بيلعبوا كشتينة",6]] },
+  { q:"فنانين سودانيين اي زول بيعرفهم (٣ رجال، ٣ نساء)", a:[["محمد وردي",30],["محمود عبد العزيز",24],["مصطفى سيد احمد",18],["نانسي عجاج",13],["حنان بلوبلو",9],["ندى القلعة",6]] },
+  { q:"حاجات موجودة في اي بيت سوداني (في السودان)", a:[["مفراكة",30],["بمبر",24],["مقشاشة سودانية",18],["صاج قراصة",13],["موتور الموية",9],["برميل الموية",6]] },
+  { q:"حاجات بيشتاق ليها السوداني في ماليزيا", a:[["الاكل السوداني",34],["لمة الاهل",26],["الجبنة",18],["الاعراس",12],["اجواء العيد",10]] },
+  { q:"اذكر اشهر ٦ حاجات موجودة في اي ماماك في ماليزيا", a:[["كونيت",30],["روتي / نان",24],["ناسي قورينق",18],["تندودي",13],["تي تاريه",9],["مايلو",6]] },
+  { q:"ستة اسباب تخليكم ما تفوتوا اي لمة لل Sudanese community", a:[["الطقة",34],["لمة الاصحاب",26],["تتعرف على ناس جداد",18],["الضحك والونسة",12],["الالعاب",10]] },
+  { q:"اذكروا ٦ مشاهير سودانيين عندهم اكثر من 500k في تيك توك (٣ نساء، ٣ رجال)", a:[["سولجا و حليم",30],["ود حيدر",24],["تش",18],["اوسا",13],["تسابيح دياب",9],["مها جعفر",6]] },
+  { q:"ستة قبائل موجودة في شرق السودان", a:[["الهدندوة",30],["بني عامر",24],["البشاريين",18],["الرشايدة",13],["البجة",9],["الحلنقة",6]] },
+  { q:"ستة حاجات بشيلها اي مغترب معاهو قبل ما يرجع السودان", a:[["هديا الاهل",34],["الادوية",26],["الناموسية",18],["امانات الناس",12],["قروش",10]] },
+  { q:"اذكروا الحاجات اللي بتخلي الناس تتأخر عن فعاليات الـ Sudanese Community", a:[["الزحمة",34],["القراب غالي او مافي",26],["نايم",18],["الناس حتجي متأخر ف اتأخر",12],["المحاضرات",10]] },
+  { q:"حاجات ممكن تلقوها في Sudanese community حق الواتس", a:[["مواعيد اللمات والفعاليات",34],["اعلانات للشقق او العرابات",26],["قروبات اكل سوداني",18],["ناس بتسأل عن الفيزا",12],["ناس ما عندها موضوع بتتونس",10]] }
+];
+
+let teams = [
+  {name:"Team 1", score:0},
+  {name:"Team 2", score:0},
+  {name:"Team 3", score:0}
+];
+let activeTeam = 0;
+let current = 0;
+let strikeCount = 0;
+let soundOn = true;
+
+// --- sound effects, synthesized with Web Audio (no files needed) ---
+let actx;
+function ac(){ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); return actx; }
+function beep(freq, dur, type, vol, delay){
+  if(!soundOn) return;
+  try{
+    const c = ac(); const t0 = c.currentTime + (delay||0);
+    const osc = c.createOscillator(); const gain = c.createGain();
+    osc.type = type||'sine'; osc.frequency.setValueAtTime(freq, t0);
+    gain.gain.setValueAtTime(vol||0.25, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+    osc.connect(gain); gain.connect(c.destination);
+    osc.start(t0); osc.stop(t0+dur+0.02);
+  }catch(e){}
+}
+function sfxReveal(){ beep(660,0.12,'sine',0.25,0); beep(880,0.16,'sine',0.2,0.09); }
+function sfxStrike(){ beep(180,0.35,'sawtooth',0.28,0); }
+function sfxBuzz(){ beep(520,0.09,'square',0.18,0); }
+function sfxClap(){
+  if(!soundOn) return;
+  try{
+    const c = ac();
+    for(let k=0;k<3;k++){
+      const dur = 0.09, t0 = c.currentTime + k*0.09;
+      const bufferSize = Math.floor(c.sampleRate*dur);
+      const buffer = c.createBuffer(1, bufferSize, c.sampleRate);
+      const data = buffer.getChannelData(0);
+      for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * (1 - i/bufferSize); }
+      const noise = c.createBufferSource(); noise.buffer = buffer;
+      const bp = c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=2000; bp.Q.value=0.7;
+      const gain = c.createGain(); gain.gain.setValueAtTime(0.5, t0); gain.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+      noise.connect(bp); bp.connect(gain); gain.connect(c.destination);
+      noise.start(t0);
+    }
+  }catch(e){}
+}
+function sfxTick(loud){ beep(loud?1100:820, loud?0.13:0.07, 'square', loud?0.4:0.14, 0); }
+function sfxTimeUp(){ beep(220,0.5,'sawtooth',0.35,0); beep(160,0.55,'sawtooth',0.3,0.16); }
+function sfxLose(){
+  if(!soundOn) return;
+  try{
+    const c = ac(); const t0 = c.currentTime;
+    const osc = c.createOscillator(); const gain = c.createGain();
+    osc.type='sawtooth';
+    osc.frequency.setValueAtTime(320, t0);
+    osc.frequency.exponentialRampToValueAtTime(90, t0+0.4);
+    gain.gain.setValueAtTime(0.25, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0+0.45);
+    osc.connect(gain); gain.connect(c.destination);
+    osc.start(t0); osc.stop(t0+0.5);
+  }catch(e){}
+}
+function toggleSound(){
+  soundOn = !soundOn;
+  document.getElementById('soundBtn').textContent = soundOn ? '🔊 Sound on' : '🔇 Sound off';
+  if(soundOn) beep(440,0.1,'sine',0.2,0);
+}
+
+function renderTeams(){
+  const el = document.getElementById('teams');
+  el.innerHTML = teams.map((t,i)=>`
+    <div class="team ${i===activeTeam?'active':''}" data-i="${i}">
+      <div class="team-name" contenteditable="true" oninput="teams[${i}].name=this.textContent">${t.name}</div>
+      <div class="score num">${t.score}</div>
+      <div class="team-btns">
+        <button class="mini" onclick="addScore(${i},-10)">-10</button>
+        <button class="mini" onclick="addScore(${i},10)">+10</button>
+      </div>
+      <button class="buzz" onclick="setActive(${i})">Buzzed in</button>
+    </div>`).join('');
+}
+function setActive(i){ activeTeam=i; renderTeams(); sfxBuzz(); }
+function addScore(i,n){
+  teams[i].score = Math.max(0, teams[i].score+n);
+  renderTeams();
+  if(n>0) sfxClap(); else sfxLose();
+}
+
+function renderRound(){
+  const r = rounds[current];
+  document.getElementById('question').textContent = r.q;
+  document.getElementById('roundCount').textContent = `Question ${current+1} of ${rounds.length}`;
+  document.getElementById('slots').innerHTML = r.a.map((pair,i)=>`
+    <div class="slot" data-i="${i}" onclick="toggleSlot(this)">
+      <div class="slot-inner">
+        <div class="slot-index">${i+1}</div>
+        <div class="slot-text" contenteditable="true" dir="auto" onclick="event.stopPropagation()" oninput="rounds[${current}].a[${i}][0]=this.textContent">${pair[0]}</div>
+        <div class="slot-pts" contenteditable="true" onclick="event.stopPropagation()" oninput="rounds[${current}].a[${i}][1]=this.textContent">${pair[1]}</div>
+        <div class="slot-hint">TAP TO REVEAL</div>
+      </div>
+    </div>`).join('');
+  strikeCount = 0;
+  renderStrikes();
+}
+function toggleSlot(el){
+  const wasRevealed = el.classList.contains('revealed');
+  el.classList.toggle('revealed');
+  if(!wasRevealed) sfxReveal();
+}
+function revealAll(){
+  document.querySelectorAll('.slot').forEach((s,i)=>{
+    if(!s.classList.contains('revealed')) beep(660,0.1,'sine',0.2,i*0.08);
+    s.classList.add('revealed');
+  });
+}
+function resetRound(){
+  document.querySelectorAll('.slot').forEach(s=>s.classList.remove('revealed'));
+  strikeCount = 0; renderStrikes();
+}
+function renderStrikes(){
+  document.getElementById('strikes').innerHTML = [0,1,2].map(i=>
+    `<div class="x ${i<strikeCount?'on':''}" onclick="toggleStrike(${i})">✕</div>`).join('');
+}
+function toggleStrike(i){
+  const prev = strikeCount;
+  strikeCount = (i+1===strikeCount) ? i : i+1;
+  if(strikeCount > prev) sfxStrike();
+  renderStrikes();
+}
+function changeRound(dir){
+  current = (current+dir+rounds.length)%rounds.length;
+  renderRound();
+}
+
+function goBack(){
+  clearInterval(timerInterval); timerRunning = false;
+  document.getElementById('gameScreen').style.display = 'none';
+  const s = document.getElementById('startScreen');
+  s.style.display = 'flex';
+  s.classList.remove('fade-out');
+}
+
+// --- timer: default 60s, user-settable, +30 button, red + louder tick under 10s ---
+let timerDuration = 60;
+let timeLeft = 60;
+let timerInterval = null;
+let timerRunning = false;
+
+function renderTimer(){
+  const m = Math.floor(timeLeft/60).toString().padStart(2,'0');
+  const s = (timeLeft%60).toString().padStart(2,'0');
+  const disp = document.getElementById('timerDisplay');
+  disp.textContent = `${m}:${s}`;
+  disp.classList.toggle('low', timeLeft<=10 && timeLeft>0);
+}
+function setTimerDuration(){
+  const val = parseInt(document.getElementById('timerSet').value,10);
+  if(!isNaN(val) && val>0){
+    timerDuration = val;
+    if(!timerRunning){ timeLeft = val; renderTimer(); }
+  }
+}
+function toggleTimer(){
+  const btn = document.getElementById('timerStartBtn');
+  if(timerRunning){
+    clearInterval(timerInterval); timerRunning = false;
+    btn.textContent = 'Start';
+  }else{
+    if(timeLeft<=0) timeLeft = timerDuration;
+    timerRunning = true;
+    btn.textContent = 'Pause';
+    timerInterval = setInterval(tickTimer, 1000);
+  }
+}
+function tickTimer(){
+  timeLeft--;
+  if(timeLeft<=0){
+    timeLeft = 0; renderTimer();
+    clearInterval(timerInterval); timerRunning = false;
+    document.getElementById('timerStartBtn').textContent = 'Start';
+    sfxTimeUp();
+    return;
+  }
+  renderTimer();
+  sfxTick(timeLeft<=10);
+}
+function addTimer(n){ timeLeft += n; renderTimer(); }
+function resetTimer(){
+  clearInterval(timerInterval); timerRunning = false;
+  timeLeft = timerDuration;
+  document.getElementById('timerStartBtn').textContent = 'Start';
+  renderTimer();
+}
+
+renderTeams();
+renderRound();
+renderTimer();
+</script>
+</body>
+</html>
