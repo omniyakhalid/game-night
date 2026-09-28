@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Emoji Challenge - Game Night</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&family=Fredoka:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#2a0a4a; --pink:#ff4fa3; --cyan:#22d3ee; --yellow:#ffd93d; --card:#fff8e7; --dark:#2a0a4a;
+    --green:#22c55e; --red:#ff4d4d; --muted:#d9c7f5;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:inherit;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  html,body{height:100%;}
+  body{margin:0; background:var(--bg); color:#fff; font-family:'Inter','Cairo',system-ui,sans-serif; min-height:100%; display:flex; flex-direction:column; align-items:center;}
+  .fun{font-family:'Fredoka',system-ui,sans-serif;}
+
+  /* start screen */
+  .start-screen{width:100%; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:36px; position:relative; overflow:hidden; padding:20px; transition:opacity .4s ease;
+    background:radial-gradient(circle at 15% 20%, #7a24d6 0, transparent 45%), radial-gradient(circle at 85% 85%, #d81b7a 0, transparent 45%), var(--bg);}
+  .start-screen.fade-out{opacity:0; pointer-events:none;}
+  .deco{position:absolute; font-size:clamp(34px,7vw,64px); opacity:.3; pointer-events:none;}
+  .badge{position:relative; z-index:2; width:min(88vw,520px); text-align:center; background:var(--card); color:var(--dark); border:6px solid var(--dark); border-radius:30px;
+    box-shadow:10px 10px 0 var(--pink); transform:rotate(-2deg); padding:26px 30px;}
+  .badge .row{font-size:clamp(26px,7vw,36px); letter-spacing:8px; margin-bottom:8px;}
+  .b1{font-family:'Fredoka',sans-serif; font-weight:700; font-size:clamp(46px,14vw,88px); line-height:1; color:var(--dark);}
+  .b2{font-family:'Fredoka',sans-serif; font-weight:700; font-size:clamp(28px,9vw,56px); line-height:1.1; color:var(--pink); letter-spacing:1px;}
+  .start-btn{position:relative; z-index:2; padding:12px 52px; border-radius:18px; border:4px solid var(--dark); background:var(--yellow); color:var(--dark);
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:24px; cursor:pointer; box-shadow:0 7px 0 var(--dark);}
+  .start-btn:active{transform:translateY(5px); box-shadow:0 2px 0 var(--dark);}
+
+  /* game screen */
+  .game-screen{width:100%; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:24px 14px 40px;
+    background:radial-gradient(rgba(255,255,255,.09) 1.5px, transparent 1.6px) 0 0/22px 22px, linear-gradient(180deg,#3b0f6b 0%,#1e0736 100%);}
+  .top-row{display:flex; align-items:center; justify-content:space-between; width:100%; max-width:920px; margin-bottom:14px;}
+  .top-row .spacer{width:70px;}
+  .title{font-family:'Fredoka',sans-serif; font-size:clamp(26px,5vw,38px); font-weight:700; color:var(--yellow); text-align:center; margin:0;}
+
+  .teams{display:flex; gap:14px; width:100%; max-width:920px; flex-wrap:wrap; justify-content:center; margin-bottom:22px;}
+  .team{background:var(--card); color:var(--dark); border:4px solid var(--dark); border-radius:18px; box-shadow:6px 6px 0 var(--cyan); padding:14px 18px; flex:1 1 200px; text-align:center;}
+  .team.active{background:#ffe3f1; box-shadow:6px 6px 0 var(--pink);}
+  .team-name{font-weight:700; font-size:17px; color:var(--dark); outline:none; border-bottom:2px dashed transparent;}
+  .team-name:focus{border-bottom:2px dashed var(--pink);}
+  .score{font-family:'Fredoka',sans-serif; font-size:46px; font-weight:700; color:var(--pink); line-height:1.1; margin:2px 0;}
+  .team-btns{display:flex; gap:8px; justify-content:center; margin-top:6px;}
+  .mini{background:var(--cyan); color:var(--dark); border:3px solid var(--dark); border-radius:10px; padding:5px 12px; font-family:'Fredoka',sans-serif; font-weight:600; font-size:15px; cursor:pointer; box-shadow:0 3px 0 var(--dark);}
+  .mini:active,.btn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--dark);}
+  .buzz{background:#fff; color:var(--dark); border:3px solid var(--dark); border-radius:10px; padding:5px 12px; font-family:'Fredoka',sans-serif; font-weight:600; font-size:14px; cursor:pointer; margin-top:10px;}
+  .team.active .buzz{background:var(--pink); color:#fff;}
+
+  .board{width:100%; max-width:760px; background:rgba(20,4,40,.55); border:4px solid var(--cyan); border-radius:26px; padding:22px clamp(14px,4vw,30px); box-shadow:0 0 0 5px rgba(34,211,238,.18);}
+  .timer-box{display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:22px;}
+  .timer-display{font-family:'Fredoka',sans-serif; font-weight:700; font-size:clamp(38px,9vw,56px); direction:ltr; letter-spacing:2px;
+    background:var(--yellow); color:var(--dark); border:4px solid var(--dark); border-radius:60px; padding:0 34px; box-shadow:0 6px 0 var(--dark);}
+  .timer-display.low{background:var(--red); color:#fff; animation:tpulse .5s infinite alternate;}
+  @keyframes tpulse{from{transform:scale(1);} to{transform:scale(1.08);}}
+  .timer-controls{display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center;}
+  .timer-input{width:66px; padding:6px 8px; border-radius:10px; border:3px solid var(--dark); background:#fff; color:var(--dark); font-size:15px; font-weight:700; text-align:center;}
+  .btn{background:var(--yellow); color:var(--dark); border:3px solid var(--dark); border-radius:12px; padding:9px 18px; font-family:'Fredoka',sans-serif; font-weight:700; font-size:16px; cursor:pointer; box-shadow:0 4px 0 var(--dark);}
+  .btn.secondary{background:#fff;}
+
+  .tabs{direction:rtl; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:12px;}
+  .tab,.count,.ans .hint,.ans .txt,.pc{font-family:'Cairo',system-ui,sans-serif;}
+  .tab{background:rgba(255,255,255,.1); color:#fff; border:3px solid transparent; border-radius:30px; padding:7px 18px; font-weight:700; font-size:15px; cursor:pointer;}
+  .tab.on{background:var(--pink); border-color:#fff;}
+  .count{text-align:center; color:var(--muted); font-size:14px; margin-bottom:12px;}
+
+  .puzzle{border-radius:24px; border:5px solid var(--dark); background:var(--card); color:var(--dark); padding:28px 14px; box-shadow:8px 8px 0 var(--yellow);}
+  .expr{display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:14px; direction:rtl;}
+  .pc{font-size:clamp(40px,10vw,64px); font-weight:800; line-height:1.2;}
+  .plus{font-family:'Fredoka',sans-serif; font-size:clamp(30px,7vw,44px); color:var(--pink); font-weight:700;}
+  .ans{margin-top:24px; border-radius:16px; border:3px dashed var(--dark); background:#fff; color:var(--dark); text-align:center; padding:14px; cursor:pointer; min-height:68px; display:flex; align-items:center; justify-content:center; flex-direction:column;}
+  .ans .hint{font-size:14px; color:#6b4d94;}
+  .ans .txt{font-size:clamp(28px,7vw,42px); font-weight:800; display:none;}
+  .ans.revealed{background:var(--green); color:#fff; border-style:solid;}
+  .ans.revealed .txt{display:block;}
+  .ans.revealed .hint{display:none;}
+  .nav{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:22px;}
+  .hint-row{text-align:center; color:var(--muted); font-size:12px; margin-top:16px;}
+  @media (max-width:480px){ .teams{flex-direction:column;} }
+</style>
+</head>
+<body>
+
+<div class="start-screen" id="startScreen">
+  <span class="deco" style="top:8%;left:8%;transform:rotate(-12deg)">🧩</span>
+  <span class="deco" style="top:14%;right:10%;transform:rotate(14deg)">🤔</span>
+  <span class="deco" style="top:42%;left:4%;transform:rotate(10deg)">🌍</span>
+  <span class="deco" style="top:48%;right:5%;transform:rotate(-8deg)">🍔</span>
+  <span class="deco" style="bottom:12%;left:12%;transform:rotate(-14deg)">🌿</span>
+  <span class="deco" style="bottom:9%;right:14%;transform:rotate(12deg)">💡</span>
+  <span class="deco" style="top:3%;left:46%;transform:rotate(6deg)">🎯</span>
+  <div class="badge">
+    <div class="row">🧩🤔🎯</div>
+    <div class="b1">EMOJI</div>
+    <div class="b2">CHALLENGE</div>
+  </div>
+  <button class="start-btn" onclick="startGame()">START</button>
+</div>
+
+<div class="game-screen" id="gameScreen" style="display:none;">
+  <div class="top-row">
+    <button class="mini" onclick="goBack()">← Back</button>
+    <div class="title">🎮 Game Night</div>
+    <div class="spacer"></div>
+  </div>
+
+  <div class="teams" id="teams"></div>
+
+  <div class="board">
+    <div class="timer-box">
+      <div class="timer-display" id="timerDisplay">01:00</div>
+      <div class="timer-controls">
+        <input type="number" id="timerSet" class="timer-input" min="5" step="5" value="60">
+        <button class="mini" onclick="setTimerDuration()">Set (sec)</button>
+        <button class="btn" id="timerStartBtn" onclick="toggleTimer()">Start</button>
+        <button class="mini" onclick="addTimer(30)">+30</button>
+        <button class="mini" onclick="resetTimer()">Reset</button>
+      </div>
+    </div>
+
+    <div class="tabs" id="tabs"></div>
+    <div class="count" id="count"></div>
+
+    <div class="puzzle">
+      <div class="expr" id="expr"></div>
+      <div class="ans" id="ans" onclick="toggleAnswer()">
+        <div class="hint">اضغط لإظهار الإجابة</div>
+        <div class="txt" id="ansText"></div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="btn secondary" onclick="move(-1)">← Prev</button>
+      <button class="btn secondary" id="soundBtn" onclick="toggleSound()">🔊 Sound on</button>
+      <button class="btn" onclick="move(1)">Next →</button>
+    </div>
+    <div class="hint-row">Tap a team to mark them "buzzed in". Tap the answer box to reveal it. Use +10 / -10 to change team scores.</div>
+  </div>
+</div>
+
+<script>
+// ---- الألغاز: كل لغز = [ [أجزاء اللغز], الإجابة ] ----
+const stages = [
+  { name:"🌍 الدول والمدن", items:[
+    [["💵","ديف"],"مالديف"],
+    [["🌊","رين"],"بحرين"],
+    [["فيت","💤"],"فيتنام"],
+    [["🥛","ان"],"لبنان"],
+    [["🦷","غال"],"سنغال"],
+    [["👁️","لاند"],"آيلاند"],
+    [["🐈","ر"],"قطر"],
+    [["🏝️","🌑"],"جزر القمر"]
+  ]},
+  { name:"🍔 الأطعمة", items:[
+    [["🏠","زا"],"بيتزا"],
+    [["ك","🍚"],"كرز"],
+    [["با","💯"],"بامية"],
+    [["✋","تة"],"كفتة"],
+    [["ك","🚪"],"كباب"],
+    [["🗒️","🍇"],"ورق عنب"]
+  ]},
+  { name:"🌿 الطبيعة", items:[
+    [["س","💧"],"سماء"],
+    [["ش","🏺"],"شجرة"],
+    [["ن","🐈"],"نهر"]
+  ]}
+];
+
+const flat = [];
+stages.forEach((s,si)=>s.items.forEach((it,ii)=>flat.push({si, pieces:it[0], ans:it[1], n:ii+1, total:s.items.length})));
+
+let teams = [{name:"Team 1",score:0},{name:"Team 2",score:0},{name:"Team 3",score:0}];
+let activeTeam = 0, idx = 0, revealed = false, soundOn = true;
+
+// ---- الأصوات (مولّدة بالكود) ----
+let actx;
+function ac(){ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); return actx; }
+function beep(freq, dur, type, vol, delay){
+  if(!soundOn) return;
+  try{
+    const c = ac(); const t0 = c.currentTime + (delay||0);
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type||'sine'; o.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(vol||0.25, t0); g.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+    o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0+dur+0.02);
+  }catch(e){}
+}
+function sfxReveal(){ beep(660,0.12,'sine',0.25,0); beep(880,0.16,'sine',0.2,0.09); }
+function sfxBuzz(){ beep(520,0.09,'square',0.18,0); }
+function sfxTick(loud){ beep(loud?1100:820, loud?0.13:0.07, 'square', loud?0.4:0.14, 0); }
+function sfxTimeUp(){ beep(220,0.5,'sawtooth',0.35,0); beep(160,0.55,'sawtooth',0.3,0.16); }
+function sfxClap(){
+  if(!soundOn) return;
+  try{
+    const c = ac();
+    for(let k=0;k<3;k++){
+      const dur=0.09, t0=c.currentTime+k*0.09, n=Math.floor(c.sampleRate*dur);
+      const b=c.createBuffer(1,n,c.sampleRate), d=b.getChannelData(0);
+      for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+      const s=c.createBufferSource(); s.buffer=b;
+      const f=c.createBiquadFilter(); f.type='bandpass'; f.frequency.value=2000; f.Q.value=0.7;
+      const g=c.createGain(); g.gain.setValueAtTime(0.5,t0); g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
+      s.connect(f); f.connect(g); g.connect(c.destination); s.start(t0);
+    }
+  }catch(e){}
+}
+function sfxLose(){
+  if(!soundOn) return;
+  try{
+    const c=ac(), t0=c.currentTime, o=c.createOscillator(), g=c.createGain();
+    o.type='sawtooth'; o.frequency.setValueAtTime(320,t0); o.frequency.exponentialRampToValueAtTime(90,t0+0.4);
+    g.gain.setValueAtTime(0.25,t0); g.gain.exponentialRampToValueAtTime(0.001,t0+0.45);
+    o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0+0.5);
+  }catch(e){}
+}
+function toggleSound(){
+  soundOn = !soundOn;
+  document.getElementById('soundBtn').textContent = soundOn ? '🔊 Sound on' : '🔇 Sound off';
+  if(soundOn) beep(440,0.1,'sine',0.2,0);
+}
+
+// ---- الشاشات ----
+function startGame(){
+  sfxBuzz();
+  const s = document.getElementById('startScreen');
+  s.classList.add('fade-out');
+  setTimeout(()=>{ s.style.display='none'; document.getElementById('gameScreen').style.display='flex'; }, 380);
+}
+function goBack(){
+  clearInterval(timerInterval); timerRunning = false;
+  document.getElementById('timerStartBtn').textContent = 'Start';
+  document.getElementById('gameScreen').style.display = 'none';
+  const s = document.getElementById('startScreen');
+  s.style.display = 'flex'; s.classList.remove('fade-out');
+}
+
+// ---- الفرق ----
+function renderTeams(){
+  document.getElementById('teams').innerHTML = teams.map((t,i)=>`
+    <div class="team ${i===activeTeam?'active':''}">
+      <div class="team-name" contenteditable="true" dir="auto" oninput="teams[${i}].name=this.textContent">${t.name}</div>
+      <div class="score">${t.score}</div>
+      <div class="team-btns">
+        <button class="mini" onclick="addScore(${i},-10)">-10</button>
+        <button class="mini" onclick="addScore(${i},10)">+10</button>
+      </div>
+      <button class="buzz" onclick="setActive(${i})">Buzzed in</button>
+    </div>`).join('');
+}
+function setActive(i){ activeTeam=i; renderTeams(); sfxBuzz(); }
+function addScore(i,n){
+  teams[i].score = Math.max(0, teams[i].score+n);
+  renderTeams();
+  if(n>0) sfxClap(); else sfxLose();
+}
+
+// ---- الألغاز ----
+function render(){
+  const p = flat[idx];
+  document.getElementById('tabs').innerHTML = stages.map((s,i)=>
+    `<button class="tab ${i===p.si?'on':''}" onclick="jumpStage(${i})">${s.name}</button>`).join('');
+  document.getElementById('count').textContent = `لغز ${p.n} من ${p.total}`;
+  document.getElementById('expr').innerHTML = p.pieces.map(x=>`<span class="pc">${x}</span>`).join('<span class="plus">+</span>');
+  document.getElementById('ansText').textContent = p.ans;
+  document.getElementById('ans').classList.remove('revealed');
+  revealed = false;
+}
+function jumpStage(si){ idx = flat.findIndex(f=>f.si===si); afterMove(); }
+function move(d){ idx = (idx+d+flat.length)%flat.length; afterMove(); }
+function afterMove(){ resetTimer(); render(); }
+function toggleAnswer(){
+  revealed = !revealed;
+  document.getElementById('ans').classList.toggle('revealed', revealed);
+  if(revealed) sfxReveal();
+}
+
+// ---- المؤقت ----
+let timerDuration = 60, timeLeft = 60, timerInterval = null, timerRunning = false;
+function renderTimer(){
+  const m = String(Math.floor(timeLeft/60)).padStart(2,'0'), s = String(timeLeft%60).padStart(2,'0');
+  const d = document.getElementById('timerDisplay');
+  d.textContent = `${m}:${s}`;
+  d.classList.toggle('low', timeLeft<=10 && timeLeft>0);
+}
+function setTimerDuration(){
+  const v = parseInt(document.getElementById('timerSet').value,10);
+  if(!isNaN(v) && v>0){ timerDuration = v; if(!timerRunning){ timeLeft = v; renderTimer(); } }
+}
+function toggleTimer(){
+  const b = document.getElementById('timerStartBtn');
+  if(timerRunning){ clearInterval(timerInterval); timerRunning=false; b.textContent='Start'; }
+  else{
+    if(timeLeft<=0) timeLeft = timerDuration;
+    timerRunning = true; b.textContent = 'Pause';
+    timerInterval = setInterval(tickTimer, 1000);
+  }
+}
+function tickTimer(){
+  timeLeft--;
+  if(timeLeft<=0){
+    timeLeft=0; renderTimer(); clearInterval(timerInterval); timerRunning=false;
+    document.getElementById('timerStartBtn').textContent='Start';
+    sfxTimeUp(); return;
+  }
+  renderTimer(); sfxTick(timeLeft<=10);
+}
+function addTimer(n){ timeLeft += n; renderTimer(); }
+function resetTimer(){
+  clearInterval(timerInterval); timerRunning=false; timeLeft=timerDuration;
+  document.getElementById('timerStartBtn').textContent='Start'; renderTimer();
+}
+
+renderTeams(); render(); renderTimer();
+</script>
+</body>
+</html>
