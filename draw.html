@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Draw & Guess - Game Night</title>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme:light;
+    --paper:#fbf7ee; --card:#ffffff; --ink:#1f2430; --line:rgba(31,36,48,.07);
+    --red:#e5484d; --blue:#2f6fed; --green:#1fa463; --yellow:#ffe066; --orange:#f59f00; --muted:#6b7280;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:inherit;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  html,body{height:100%;}
+  body{margin:0; color:var(--ink); font-family:'Inter',system-ui,sans-serif; min-height:100%; display:flex; flex-direction:column; align-items:center;
+    background-color:var(--paper);
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:28px 28px;}
+  .k{font-family:'Kalam','Comic Sans MS',cursive;}
+  .wob{border-radius:18px 26px 16px 24px/24px 16px 26px 18px;}
+
+  /* start screen */
+  .start-screen{width:100%; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:38px; position:relative; overflow:hidden; padding:20px; transition:opacity .4s ease;}
+  .start-screen.fade-out{opacity:0; pointer-events:none;}
+  .deco{position:absolute; font-size:clamp(34px,7vw,64px); opacity:.55; pointer-events:none;}
+  .badge{position:relative; z-index:2; width:min(88vw,520px); text-align:center; background:var(--card); border:5px solid var(--ink); box-shadow:9px 9px 0 var(--yellow); padding:26px 30px; transform:rotate(1.5deg);}
+  .badge .row{font-size:clamp(26px,7vw,36px); letter-spacing:8px; margin-bottom:4px;}
+  .b1{font-family:'Kalam',cursive; font-weight:700; font-size:clamp(50px,15vw,92px); line-height:1; color:var(--ink);}
+  .b2{font-family:'Kalam',cursive; font-weight:700; font-size:clamp(34px,10vw,62px); line-height:1.1; color:var(--red);
+    background:linear-gradient(transparent 62%, var(--yellow) 62% 90%, transparent 90%); display:inline-block; padding:0 10px;}
+  .start-btn{position:relative; z-index:2; padding:10px 54px; border:4px solid var(--ink); background:var(--blue); color:#fff; font-family:'Kalam',cursive; font-weight:700; font-size:28px; cursor:pointer; box-shadow:0 7px 0 var(--ink);}
+  .start-btn:active{transform:translateY(5px); box-shadow:0 2px 0 var(--ink);}
+
+  /* game screen */
+  .game-screen{width:100%; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:22px 14px 40px;}
+  .top-row{display:flex; align-items:center; justify-content:space-between; width:100%; max-width:960px; margin-bottom:14px;}
+  .top-row .spacer{width:78px;}
+  .title{font-family:'Kalam',cursive; font-size:clamp(26px,5vw,38px); font-weight:700; margin:0; text-align:center;}
+  .mini{background:var(--card); color:var(--ink); border:3px solid var(--ink); padding:4px 12px; font-family:'Kalam',cursive; font-weight:700; font-size:16px; cursor:pointer; box-shadow:0 3px 0 var(--ink); border-radius:12px 14px 10px 14px;}
+  .mini:active:not(:disabled),.btn:active:not(:disabled){transform:translateY(3px); box-shadow:0 1px 0 var(--ink);}
+  .mini:disabled{opacity:.4; cursor:not-allowed;}
+  .btn{background:var(--yellow); color:var(--ink); border:3px solid var(--ink); padding:8px 20px; font-family:'Kalam',cursive; font-weight:700; font-size:18px; cursor:pointer; box-shadow:0 4px 0 var(--ink); border-radius:14px 18px 12px 18px;}
+  .btn.blue{background:var(--blue); color:#fff;}
+  .btn.plain{background:var(--card);}
+
+  .teams{display:flex; gap:16px; width:100%; max-width:960px; flex-wrap:wrap; justify-content:center; margin-bottom:22px;}
+  .team{background:var(--card); border:4px solid var(--ink); border-top:12px solid var(--tc); box-shadow:6px 6px 0 var(--tc); padding:12px 16px 14px; flex:1 1 220px; text-align:center;}
+  .team-name{font-family:'Kalam',cursive; font-weight:700; font-size:20px; outline:none; border-bottom:2px dashed transparent;}
+  .team-name:focus{border-bottom:2px dashed var(--tc);}
+  .score{font-family:'Kalam',cursive; font-weight:700; font-size:52px; line-height:1.05; color:var(--tc);}
+  .team-btns{display:flex; gap:8px; justify-content:center; margin-top:4px;}
+  .got{margin-top:10px; width:100%; background:var(--tc); color:#fff; border:3px solid var(--ink); padding:6px 8px; font-family:'Kalam',cursive; font-weight:700; font-size:17px; cursor:pointer; box-shadow:0 4px 0 var(--ink); border-radius:12px 16px 10px 16px;}
+  .got:active:not(:disabled){transform:translateY(3px); box-shadow:0 1px 0 var(--ink);}
+  .got:disabled{opacity:.4; cursor:not-allowed;}
+
+  .board{width:100%; max-width:820px; background:var(--card); border:5px solid var(--ink); box-shadow:9px 9px 0 var(--ink); padding:22px clamp(14px,4vw,30px);}
+  .phase{display:inline-block; font-family:'Kalam',cursive; font-weight:700; font-size:22px; padding:2px 22px; border:3px solid var(--ink); border-radius:30px; background:#eee;}
+  .phase.draw{background:var(--blue); color:#fff;}
+  .phase.guess{background:var(--orange); color:var(--ink);}
+  .phase.done{background:var(--ink); color:#fff;}
+  .timer-box{display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:20px;}
+  .timer-display{font-family:'Kalam',cursive; font-weight:700; font-size:clamp(54px,13vw,84px); line-height:1; letter-spacing:2px;}
+  .timer-display.low{color:var(--red); animation:tpulse .5s infinite alternate;}
+  @keyframes tpulse{from{transform:scale(1);} to{transform:scale(1.09);}}
+  .controls{display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center;}
+  .set-row{display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; font-size:13px; color:var(--muted);}
+  .timer-input{width:58px; padding:5px 6px; border:3px solid var(--ink); border-radius:10px; background:#fff; color:var(--ink); font-size:15px; font-weight:700; text-align:center;}
+
+  .tabs{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:6px 0 6px;}
+  .tab{background:transparent; color:var(--ink); border:3px solid transparent; border-radius:30px; padding:4px 16px; font-family:'Kalam',cursive; font-weight:700; font-size:18px; cursor:pointer;}
+  .tab.on{background:var(--yellow); border-color:var(--ink);}
+  .roundinfo{text-align:center; color:var(--muted); font-size:14px; margin-bottom:12px;}
+
+  .wordcard{border:4px dashed var(--ink); background:#fffdf6; padding:22px 12px; text-align:center; min-height:240px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;}
+  .wordcard.revealed{border-style:solid; background:#e8f7ee;}
+  .chip{font-family:'Kalam',cursive; font-weight:700; font-size:20px; background:var(--yellow); border:3px solid var(--ink); padding:0 16px; border-radius:20px; margin-bottom:6px;}
+  .pic{font-size:clamp(70px,18vw,120px); line-height:1.1;}
+  .word{font-family:'Kalam',cursive; font-weight:700; font-size:clamp(26px,6vw,40px); line-height:1.15;}
+  .note{font-family:'Kalam',cursive; font-size:22px; font-weight:700; color:var(--green); min-height:30px;}
+  .nav{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:22px;}
+  .hint-row{text-align:center; color:var(--muted); font-size:12px; margin-top:16px;}
+  @media (max-width:520px){ .teams{flex-direction:column;} }
+</style>
+</head>
+<body>
+
+<div class="start-screen" id="startScreen">
+  <span class="deco" style="top:8%;left:8%;transform:rotate(-14deg)">✏️</span>
+  <span class="deco" style="top:12%;right:9%;transform:rotate(12deg)">🎨</span>
+  <span class="deco" style="top:44%;left:4%;transform:rotate(10deg)">🖍️</span>
+  <span class="deco" style="top:50%;right:5%;transform:rotate(-10deg)">🤔</span>
+  <span class="deco" style="bottom:11%;left:11%;transform:rotate(-8deg)">🖼️</span>
+  <span class="deco" style="bottom:9%;right:13%;transform:rotate(14deg)">⏱️</span>
+  <div class="badge wob">
+    <div class="row">✏️🎨🤔</div>
+    <div class="b1">DRAW</div>
+    <div class="b2">& GUESS</div>
+  </div>
+  <button class="start-btn wob" onclick="startGame()">START</button>
+</div>
+
+<div class="game-screen" id="gameScreen" style="display:none;">
+  <div class="top-row">
+    <button class="mini" onclick="goBack()">← Back</button>
+    <div class="title">🎮 Game Night</div>
+    <div class="spacer"></div>
+  </div>
+
+  <div class="teams" id="teams"></div>
+
+  <div class="board wob">
+    <div class="timer-box">
+      <span class="phase" id="phase">Ready</span>
+      <div class="timer-display" id="timerDisplay">01:00</div>
+      <div class="controls">
+        <button class="btn blue" id="startBtn" onclick="toggleTimer()">▶ Start</button>
+        <button class="btn plain" onclick="addTimer(30)">+30</button>
+        <button class="btn plain" onclick="resetRound()">Reset</button>
+      </div>
+      <div class="set-row">
+        Draw <input type="number" id="drawSet" class="timer-input" min="5" step="5" value="60">
+        Guess <input type="number" id="guessSet" class="timer-input" min="5" step="5" value="60"> sec
+        <button class="mini" onclick="setDurations()">Set</button>
+      </div>
+    </div>
+
+    <div class="tabs" id="tabs"></div>
+    <div class="roundinfo" id="roundInfo"></div>
+
+    <div class="wordcard wob" id="wordcard">
+      <div class="chip" id="chip"></div>
+      <div class="pic" id="pic">❓</div>
+      <div class="word" id="word">What is it?</div>
+      <div class="note" id="note"></div>
+    </div>
+
+    <div class="nav">
+      <button class="btn plain" onclick="move(-1)">← Prev</button>
+      <button class="btn plain" onclick="revealNow()">👁 Show answer</button>
+      <button class="btn plain" id="soundBtn" onclick="toggleSound()">🔊 Sound on</button>
+      <button class="btn" onclick="move(1)">Next →</button>
+    </div>
+    <div class="hint-row">Tap "Guessed it" under the team that answered first. If nobody gets it, the answer shows when the guess timer ends.</div>
+  </div>
+</div>
+
+<script>
+// ---- Words: edit here. Order = round order. [word, picture] ----
+const levels = [
+  { name:"Easy", dot:"🟢", pts:10, items:[
+    ["Sun","☀️"],["Tree","🌳"],["Fish","🐟"],["Ice cream","🍦"],["Airplane","✈️"]
+  ]},
+  { name:"Mid", dot:"🟡", pts:20, items:[
+    ["Island","🏝️"],["Map","🗺️"],["Crown","👑"],["Robot","🤖"],["Magnet","🧲"]
+  ]},
+  { name:"Hard", dot:"🔴", pts:30, items:[
+    ["Someone charging the phone","🔌📱"],["Someone’s wedding","👰🤵"],["Someone taking a selfie","🤳"],["Someone scared","😱"],["Someone hangry","😡🍔"]
+  ]}
+];
+const flat = [];
+levels.forEach((L,li)=>L.items.forEach((it,ii)=>flat.push({li, word:it[0], pic:it[1], pts:L.pts, n:ii+1, total:L.items.length})));
+
+const TEAM_COLORS = ['--red','--blue','--green'];
+let teams = [{name:"Team 1",score:0},{name:"Team 2",score:0},{name:"Team 3",score:0}];
+let idx = 0, phase = 'idle', drawDur = 60, guessDur = 60, timeLeft = 60;
+let timerInterval = null, running = false, revealed = false, roundDone = false, winner = -1, noteText = '', soundOn = true;
+
+// ---- sounds (generated in code) ----
+let actx;
+function ac(){ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); return actx; }
+function beep(freq, dur, type, vol, delay){
+  if(!soundOn) return;
+  try{
+    const c = ac(), t0 = c.currentTime + (delay||0), o = c.createOscillator(), g = c.createGain();
+    o.type = type||'sine'; o.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(vol||0.25, t0); g.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+    o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0+dur+0.02);
+  }catch(e){}
+}
+function sfxReveal(){ beep(660,0.12,'sine',0.25,0); beep(880,0.16,'sine',0.2,0.09); }
+function sfxGo(){ beep(700,0.1,'sine',0.25,0); beep(1000,0.16,'sine',0.25,0.1); }
+function sfxPhase(){ beep(500,0.12,'square',0.2,0); beep(750,0.12,'square',0.2,0.14); beep(1000,0.2,'square',0.2,0.28); }
+function sfxTick(loud){ beep(loud?1100:820, loud?0.13:0.07, 'square', loud?0.4:0.14, 0); }
+function sfxTimeUp(){ beep(220,0.5,'sawtooth',0.35,0); beep(160,0.55,'sawtooth',0.3,0.16); }
+function sfxClap(){
+  if(!soundOn) return;
+  try{
+    const c = ac();
+    for(let k=0;k<3;k++){
+      const dur=0.09, t0=c.currentTime+k*0.09, n=Math.floor(c.sampleRate*dur);
+      const b=c.createBuffer(1,n,c.sampleRate), d=b.getChannelData(0);
+      for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+      const s=c.createBufferSource(); s.buffer=b;
+      const f=c.createBiquadFilter(); f.type='bandpass'; f.frequency.value=2000; f.Q.value=0.7;
+      const g=c.createGain(); g.gain.setValueAtTime(0.5,t0); g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
+      s.connect(f); f.connect(g); g.connect(c.destination); s.start(t0);
+    }
+  }catch(e){}
+}
+function sfxLose(){
+  if(!soundOn) return;
+  try{
+    const c=ac(), t0=c.currentTime, o=c.createOscillator(), g=c.createGain();
+    o.type='sawtooth'; o.frequency.setValueAtTime(320,t0); o.frequency.exponentialRampToValueAtTime(90,t0+0.4);
+    g.gain.setValueAtTime(0.25,t0); g.gain.exponentialRampToValueAtTime(0.001,t0+0.45);
+    o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0+0.5);
+  }catch(e){}
+}
+function toggleSound(){
+  soundOn = !soundOn;
+  document.getElementById('soundBtn').textContent = soundOn ? '🔊 Sound on' : '🔇 Sound off';
+  if(soundOn) beep(440,0.1,'sine',0.2,0);
+}
+
+// ---- screens ----
+function startGame(){
+  sfxGo();
+  const s = document.getElementById('startScreen');
+  s.classList.add('fade-out');
+  setTimeout(()=>{ s.style.display='none'; document.getElementById('gameScreen').style.display='flex'; }, 380);
+}
+function goBack(){
+  resetRound();
+  document.getElementById('gameScreen').style.display = 'none';
+  const s = document.getElementById('startScreen');
+  s.style.display = 'flex'; s.classList.remove('fade-out');
+}
+
+// ---- teams ----
+function renderTeams(){
+  const pts = flat[idx].pts;
+  document.getElementById('teams').innerHTML = teams.map((t,i)=>`
+    <div class="team wob" style="--tc:var(${TEAM_COLORS[i]})">
+      <div class="team-name" contenteditable="true" oninput="teams[${i}].name=this.textContent">${t.name}</div>
+      <div class="score">${t.score}</div>
+      <div class="team-btns">
+        <button class="mini" onclick="addScore(${i},-10)">-10</button>
+        <button class="mini" onclick="addScore(${i},10)">+10</button>
+      </div>
+      <button class="got" ${roundDone?'disabled':''} onclick="award(${i})">✓ Guessed it +${pts}</button>
+    </div>`).join('');
+}
+function addScore(i,n){
+  teams[i].score = Math.max(0, teams[i].score+n);
+  renderTeams();
+  if(n>0) sfxClap(); else sfxLose();
+}
+function award(i){
+  if(roundDone) return;
+  roundDone = true; winner = i;
+  teams[i].score += flat[idx].pts;
+  stopTimer(); phase = 'done';
+  revealed = true; noteText = '';
+  renderAll(); sfxClap();
+}
+
+// ---- round / word card ----
+function renderTabs(){
+  const cur = flat[idx].li;
+  document.getElementById('tabs').innerHTML = levels.map((L,i)=>
+    `<button class="tab ${i===cur?'on':''}" onclick="jumpLevel(${i})">${L.dot} ${L.name}</button>`).join('');
+}
+function renderCard(){
+  const p = flat[idx], L = levels[p.li];
+  document.getElementById('roundInfo').textContent = `Round ${idx+1} of ${flat.length}  ·  ${L.name} ${p.n}/${p.total}`;
+  document.getElementById('chip').textContent = `${L.dot} ${L.name} · ${p.pts} pts`;
+  document.getElementById('wordcard').classList.toggle('revealed', revealed);
+  document.getElementById('pic').textContent = revealed ? p.pic : '❓';
+  document.getElementById('word').textContent = revealed ? p.word : 'What is it?';
+  document.getElementById('note').textContent = winner>=0 ? `🎉 ${teams[winner].name} got it! +${p.pts}` : (revealed ? noteText : '');
+}
+function move(d){ idx = (idx+d+flat.length)%flat.length; resetRound(); }
+function jumpLevel(li){ idx = flat.findIndex(f=>f.li===li); resetRound(); }
+function revealNow(){
+  stopTimer(); if(phase!=='idle') phase='done'; else phase='done';
+  revealed = true; noteText = 'Here is the answer!';
+  renderAll(); sfxReveal();
+}
+
+// ---- timer: draw phase then guess phase ----
+function renderTimer(){
+  const m = String(Math.floor(timeLeft/60)).padStart(2,'0'), s = String(timeLeft%60).padStart(2,'0');
+  const d = document.getElementById('timerDisplay');
+  d.textContent = `${m}:${s}`;
+  d.classList.toggle('low', (phase==='draw'||phase==='guess') && timeLeft<=10 && timeLeft>0);
+}
+function renderPhase(){
+  const el = document.getElementById('phase');
+  el.className = 'phase ' + (phase==='draw'?'draw':phase==='guess'?'guess':phase==='done'?'done':'');
+  el.textContent = phase==='draw' ? '✏️ DRAW!' : phase==='guess' ? '🤔 GUESS!' : phase==='done' ? '⏹ Round over' : 'Ready';
+  const b = document.getElementById('startBtn');
+  b.textContent = running ? '⏸ Pause' : (phase==='draw'||phase==='guess') ? '▶ Resume' : '▶ Start';
+}
+function renderAll(){ renderTeams(); renderTabs(); renderCard(); renderTimer(); renderPhase(); }
+function stopTimer(){ clearInterval(timerInterval); running = false; }
+function toggleTimer(){
+  if(phase==='done') resetRound();
+  if(running){ stopTimer(); }
+  else{
+    if(phase==='idle'){ phase='draw'; timeLeft=drawDur; sfxGo(); }
+    running = true; timerInterval = setInterval(tick, 1000);
+  }
+  renderTimer(); renderPhase();
+}
+function tick(){
+  timeLeft--;
+  if(timeLeft<=0){
+    if(phase==='draw'){
+      phase='guess'; timeLeft=guessDur; sfxPhase();
+    }else{
+      timeLeft=0; stopTimer(); phase='done'; revealed=true; noteText='Nobody got it this time 😅';
+      sfxTimeUp(); setTimeout(sfxReveal, 700);
+      renderAll(); return;
+    }
+    renderTimer(); renderPhase(); return;
+  }
+  renderTimer(); sfxTick(timeLeft<=10);
+}
+function addTimer(n){ if(phase==='draw'||phase==='guess'){ timeLeft += n; renderTimer(); } }
+function resetRound(){
+  stopTimer(); phase='idle'; timeLeft=drawDur; revealed=false; roundDone=false; winner=-1; noteText='';
+  renderAll();
+}
+function setDurations(){
+  const d = parseInt(document.getElementById('drawSet').value,10), g = parseInt(document.getElementById('guessSet').value,10);
+  if(!isNaN(d) && d>0) drawDur = d;
+  if(!isNaN(g) && g>0) guessDur = g;
+  if(phase==='idle'){ timeLeft = drawDur; renderTimer(); }
+}
+
+renderAll();
+</script>
+</body>
+</html>
